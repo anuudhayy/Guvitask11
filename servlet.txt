@@ -1,0 +1,51 @@
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/FeedbackServlet")
+public class FeedbackServlet extends HttpServlet {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/feedback_db";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "yourpassword";
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Retrieve form data
+        String name = request.getParameter("name");
+        String bookName = request.getParameter("bookName");
+        String feedback = request.getParameter("feedback");
+
+        // Database connection and insert logic
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            String sql = "INSERT INTO feedback (name, book_name, feedback) VALUES (?, ?, ?)";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, name);
+            statement.setString(2, bookName);
+            statement.setString(3, feedback);
+
+            int rowsInserted = statement.executeUpdate();
+            response.setContentType("text/html");
+            PrintWriter out = response.getWriter();
+
+            if (rowsInserted > 0) {
+                out.println("<h1>Feedback saved!</h1>");
+            } else {
+                out.println("<h1>Error saving feedback!</h1>");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.setContentType("text/html");
+            PrintWriter out = response.getWriter();
+            out.println("<h1>Database error!</h1>");
+        }
+    }
+}
